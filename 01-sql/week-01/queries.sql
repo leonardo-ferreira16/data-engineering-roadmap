@@ -164,6 +164,127 @@ INNER JOIN
 
 
 -- ============================================================
--- Queries 07–15
--- Add the date, UNION/UNION ALL, EXISTS and CASE exercises here.
+-- Query 07
+-- Business question:
+-- Classify products into price ranges.
+-- Concepts: CASE
 -- ============================================================
+
+SELECT
+    product_name,
+    unit_price,
+    CASE
+        WHEN unit_price < 20 THEN 'Baixo'
+        WHEN unit_price >= 20 AND unit_price <= 50 THEN 'Médio'
+        ELSE 'Alto'
+    END AS faixa_preco
+FROM
+    products
+ORDER BY
+    unit_price DESC;
+
+
+-- ============================================================
+-- Query 08
+-- Business question:
+-- List customers that have at least one order.
+-- Concepts: EXISTS, correlated subquery
+-- ============================================================
+
+SELECT
+    c.customer_id,
+    c.company_name
+FROM
+    customers c
+WHERE EXISTS (
+    SELECT
+        1
+    FROM
+        orders o
+    WHERE
+        o.customer_id = c.customer_id
+);
+
+
+-- ============================================================
+-- Query 09
+-- Business question:
+-- List customers that have no orders.
+-- Concepts: NOT EXISTS, correlated subquery
+-- ============================================================
+
+SELECT
+    c.customer_id,
+    c.company_name
+FROM
+    customers c
+WHERE NOT EXISTS (
+    SELECT
+        1
+    FROM
+        orders o
+    WHERE
+        o.customer_id = c.customer_id
+);
+
+
+-- ============================================================
+-- Query 10
+-- Business question:
+-- Count orders per customer and classify activity level.
+-- Concepts: LEFT JOIN, GROUP BY, COUNT, CASE
+-- ============================================================
+
+SELECT
+    c.customer_id,
+    c.company_name,
+    COUNT(o.order_id) AS total_pedidos,
+    CASE
+        WHEN COUNT(o.order_id) = 0 THEN 'Sem pedidos'
+        WHEN COUNT(o.order_id) >= 1 AND COUNT(o.order_id) <= 5 THEN 'Baixa'
+        WHEN COUNT(o.order_id) > 5 AND COUNT(o.order_id) <= 10 THEN 'Média'
+        WHEN COUNT(o.order_id) > 10 THEN 'Alta'
+    END AS nivel_atividade
+FROM
+    customers c
+LEFT JOIN
+    orders o
+    ON c.customer_id = o.customer_id
+GROUP BY
+    c.customer_id
+ORDER BY
+    total_pedidos DESC;
+
+
+-- ============================================================
+-- Query 11
+-- Business question:
+-- Compare each category's average product price with the overall average.
+-- Concepts: CTE, CROSS JOIN, AVG, CASE, GROUP BY
+-- ============================================================
+
+WITH media_geral AS (
+    SELECT
+        AVG(unit_price) AS media
+    FROM
+        products
+)
+
+SELECT
+    p.category_id,
+    AVG(p.unit_price) AS media_preco_categoria,
+    CASE
+        WHEN AVG(p.unit_price) > m.media THEN 'Acima da média'
+        WHEN AVG(p.unit_price) = m.media THEN 'Na média'
+        WHEN AVG(p.unit_price) < m.media THEN 'Abaixo da média'
+    END AS classificacao
+FROM
+    products p
+CROSS JOIN
+    media_geral m
+GROUP BY
+    p.category_id,
+    m.media;
+
+
+-- Additional date and UNION exercises were completed during Week 01.
